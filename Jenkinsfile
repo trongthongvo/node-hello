@@ -29,17 +29,14 @@ pipeline {
       stage('[NODEJS] Build') {
          steps {
             echo '****** Build app ******'
-            sh '''
-            docker build -t ${DOCKER_IMAGE}:${BUILD_ID} .
-            docker tag ${DOCKER_IMAGE}:${BUILD_ID} ${ECR_REPO}:${BUILD_ID}
-            '''
+            sh './jenkins/build.sh'
          }
       }
       
       stage('[NODEJS] Push to ECR') {
          steps {
             echo '****** Push docker image to ECR ******'
-            sh './jenkins/build.sh'
+            sh './jenkins/push.sh'
          }
       }
       
@@ -49,12 +46,7 @@ pipeline {
 	    }
             steps {
 		echo "****** Deploy to ${BRANCH_NAME} branch ******"
-		sh '''
-		TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "${STAGING_TASK}")
-		NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg ECR_REPO "${ECR_REPO}:${APP_VERSION}" --arg APP_VERSION "${APP_VERSION}" --arg APP_ENV "${APP_ENV}" '.taskDefinition |.containerDefinitions[0].image = $ECR_REPO | .containerDefinitions[0].environment[0].value = $APP_VERSION |.containerDefinitions[0].environment[1].value = $APP_ENV  | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities)')
-		TASK_VERSION=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" | jq --raw-output '.taskDefinition.revision')
- 		ECS_UPDATE=$(aws ecs update-service --force-new-deployment --cluster ${STAGING_CLUSTER}  --service ${STAGING_SERVICE} --task-definition ${STAGING_TASK}:$TASK_VERSION  | jq --raw-output '.service.serviceName')
-		'''
+                sh './jenkins/deploy_staging.sh'
             }
         }
       stage('[NODEJS] Deploy to production') {
@@ -63,12 +55,7 @@ pipeline {
             }
             steps {
 		echo "****** Deploy to ${BRANCH_NAME} branch ******"
-		sh '''
-		TASK_DEFINITION=$(aws ecs describe-task-definition --task-definition "${RELEASE_TASK}")
-		NEW_TASK_DEFINITION=$(echo $TASK_DEFINITION | jq --arg ECR_REPO "${ECR_REPO}:${APP_VERSION}" --arg APP_VERSION "${APP_VERSION}" --arg APP_ENV "${APP_ENV}" '.taskDefinition |.containerDefinitions[0].image = $ECR_REPO | .containerDefinitions[0].environment[0].value = $APP_VERSION |.containerDefinitions[0].environment[1].value = $APP_ENV  | del(.taskDefinitionArn) | del(.revision) | del(.status) | del(.requiresAttributes) | del(.compatibilities)')
-		TASK_VERSION=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEFINITION" | jq --raw-output '.taskDefinition.revision')
- 		ECS_UPDATE=$(aws ecs update-service --force-new-deployment --cluster ${RELEASE_CLUSTER}  --service ${RELEASE_SERVICE} --task-definition ${RELEASE_TASK}:$TASK_VERSION  | jq --raw-output '.service.serviceName')
-		'''
+                sh './jenkins/deploy_release.sh'
             }
         }
    }
