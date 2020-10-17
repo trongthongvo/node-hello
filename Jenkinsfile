@@ -1,6 +1,7 @@
 
 pipeline {
-   agent { label 'node1' }
+   //agent { label 'node1' }
+   agent any	
    
    environment { 
 	   
