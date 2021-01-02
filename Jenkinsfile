@@ -1,7 +1,7 @@
 
 pipeline {
    
-   agent { label 'main' }
+   agent { label 'builder' }
    
    environment { 
 	   
