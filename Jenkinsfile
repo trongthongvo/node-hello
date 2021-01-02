@@ -16,9 +16,9 @@ pipeline {
 	AWS_DEFAULT_REGION    = 'ap-southeast-1'
 	AWS_DEFAULT_OUTPUT    = 'json'
 	   
-	STAGING_TASK    = 'nodejs-staging-task'
+	STAGING_TASK    = 'nodejs-release-task'
 	STAGING_CLUSTER = 'nodejs-staging-cluster'
-	STAGING_SERVICE = 'nodejs-staging-srv'
+	STAGING_SERVICE = 'nodejs-staging-cluster'
 	   
 	RELEASE_TASK    = 'nodejs-release-task'
 	RELEASE_CLUSTER = 'nodejs-release-cluster'
